@@ -1,0 +1,22 @@
+# UiPath
+.local/
+.settings/
+.objects/
+.tmh/
+**/.local/
+**/.settings/
+**/.objects/
+
+# Saídas de execução / screenshots de exceção
+Exceptions_Screenshots/*.png
+.screenshots/*.png
+
+# Credenciais / segredos (NUNCA versionar)
+*.env
+credentials.txt
+secrets.*
+
+# Sistema
+Thumbs.db
+.DS_Store
+~$*.xlsx

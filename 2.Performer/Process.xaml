@@ -1,0 +1,79 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Process"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_TransactionItem" Type="InArgument(ui:QueueItem)" />
+    <x:Property Name="in_Config" Type="InArgument(scg:Dictionary(x:String, x:Object))" />
+    <x:Property Name="in_TransactionNumber" Type="InArgument(x:Int32)" />
+  </x:Members>
+  <sap2010:WorkflowViewState.IdRef>Process_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="4">
+      <x:String>System</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>UiPath.Core</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <Sequence DisplayName="Process - Cria Work Item no ACME">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Name="WIType" />
+      <Variable x:TypeArguments="x:String" Name="Description" />
+      <Variable x:TypeArguments="x:String" Name="Vendor" />
+      <Variable x:TypeArguments="x:String" Name="WIID" />
+      <Variable x:TypeArguments="ui:Browser" Name="ACME_Browser" />
+    </Sequence.Variables>
+
+    <!-- 1. Le os dados da transacao (contrato em Documentation/QueueSchema.md) -->
+    <Assign DisplayName="Le WIType">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[WIType]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[in_TransactionItem.SpecificContent("WIType").ToString.Trim]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Le Description">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[Description]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[in_TransactionItem.SpecificContent("Description").ToString.Trim]</InArgument></Assign.Value>
+    </Assign>
+    <Assign DisplayName="Le Vendor">
+      <Assign.To><OutArgument x:TypeArguments="x:String">[Vendor]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="x:String">[in_TransactionItem.SpecificContent("Vendor").ToString.Trim]</InArgument></Assign.Value>
+    </Assign>
+
+    <!-- Recupera o Browser aberto no InitAllApplications (guardado no Config) -->
+    <Assign DisplayName="Recupera Browser do Config">
+      <Assign.To><OutArgument x:TypeArguments="ui:Browser">[ACME_Browser]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="ui:Browser">[DirectCast(in_Config("ACME_Browser"), UiPath.Core.Browser)]</InArgument></Assign.Value>
+    </Assign>
+
+    <!-- 2. Regra de negocio: vendor precisa estar habilitado -->
+    <If Condition="[String.IsNullOrEmpty(Vendor) OrElse Not in_Config("AcceptedVendors").ToString.Split(&quot;;&quot;c).Contains(Vendor)]" DisplayName="Valida Vendor">
+      <If.Then>
+        <Throw DisplayName="Business Rule Exception">
+          <Throw.Exception>
+            <InArgument x:TypeArguments="x:Exception">[New UiPath.Core.BusinessRuleException("Vendor nao habilitado para criar Work Item: " &amp; Vendor)]</InArgument>
+          </Throw.Exception>
+        </Throw>
+      </If.Then>
+    </If>
+
+    <!-- 3. Acao no sistema: cria o Work Item -->
+    <ui:InvokeWorkflowFile DisplayName="Invoke System1_CreateWorkItem" WorkflowFileName="System1_CreateWorkItem.xaml">
+      <ui:InvokeWorkflowFile.Arguments>
+        <scg:Dictionary x:TypeArguments="x:String, InArgument" />
+      </ui:InvokeWorkflowFile.Arguments>
+    </ui:InvokeWorkflowFile>
+
+    <!-- 4. Rastreabilidade: anexa o WIID a todos os logs desta transacao -->
+    <ui:AddLogFields DisplayName="Add Log Field: WIID">
+      <ui:AddLogFields.Fields>
+        <scg:Dictionary x:TypeArguments="x:String, x:Object">
+          <x:String x:Key="WIID">[WIID]</x:String>
+        </scg:Dictionary>
+      </ui:AddLogFields.Fields>
+    </ui:AddLogFields>
+    <ui:LogMessage DisplayName="Log: transacao concluida" Level="Info" Message="[&quot;Work Item criado com sucesso: &quot; &amp; WIID &amp; &quot; (transacao #&quot; &amp; in_TransactionNumber.ToString &amp; &quot;)&quot;]" />
+  </Sequence>
+</Activity>

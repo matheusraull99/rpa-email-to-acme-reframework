@@ -1,0 +1,48 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="System1_CreateWorkItem"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_Browser" Type="InArgument(ui:Browser)" />
+    <x:Property Name="in_WIType" Type="InArgument(x:String)" />
+    <x:Property Name="in_Description" Type="InArgument(x:String)" />
+    <x:Property Name="in_Vendor" Type="InArgument(x:String)" />
+    <x:Property Name="out_WIID" Type="OutArgument(x:String)" />
+  </x:Members>
+  <sap2010:WorkflowViewState.IdRef>System1_CreateWorkItem_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="3">
+      <x:String>System</x:String>
+      <x:String>UiPath.Core</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <Sequence DisplayName="System1 - Cria Work Item">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="x:String" Name="GeneratedWIID" />
+    </Sequence.Variables>
+    <ui:LogMessage DisplayName="Log: criando WI" Level="Info" Message="[&quot;Criando Work Item. Tipo=&quot; &amp; in_WIType &amp; &quot; Vendor=&quot; &amp; in_Vendor]" />
+    <ui:NavigateBrowser Browser="[in_Browser]" DisplayName="Abre Work Items" Url="https://acme-test.uipath.com/work-items/new" />
+    <ui:SelectItem DisplayName="Seleciona o Tipo (WIType)" Item="[in_WIType]" Selector="&lt;webctrl id='type' tag='SELECT' /&gt;" />
+    <ui:TypeInto DisplayName="Preenche Vendor (Trade)" Text="[in_Vendor]" SimulateType="True" Selector="&lt;webctrl id='trade' tag='INPUT' /&gt;" />
+    <ui:TypeInto DisplayName="Preenche Descricao" Text="[in_Description]" SimulateType="True" Selector="&lt;webctrl id='description' tag='TEXTAREA' /&gt;" />
+    <ui:Click DisplayName="Clica em Create Work Item" SimulateClick="True" Selector="&lt;webctrl tag='BUTTON' aaname='Create Work Item' /&gt;" />
+    <ui:GetText DisplayName="Captura o numero do WI gerado" Selector="&lt;webctrl tag='SPAN' css-selector='span.label-info' /&gt;">
+      <ui:GetText.Text>
+        <OutArgument x:TypeArguments="x:String">[GeneratedWIID]</OutArgument>
+      </ui:GetText.Text>
+    </ui:GetText>
+    <Assign DisplayName="Retorna out_WIID">
+      <Assign.To>
+        <OutArgument x:TypeArguments="x:String">[out_WIID]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="x:String">[GeneratedWIID]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <ui:LogMessage DisplayName="Log: WI criado" Level="Info" Message="[&quot;Work Item criado: &quot; &amp; out_WIID]" />
+  </Sequence>
+</Activity>
