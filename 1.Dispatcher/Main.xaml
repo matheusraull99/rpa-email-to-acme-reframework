@@ -28,7 +28,15 @@
     </Sequence.Variables>
 
     <!-- 1. Carrega configuracao (mesma rotina do REFramework) -->
-    <ui:InvokeWorkflowFile DisplayName="Invoke InitAllSettings (le Config.xlsx)" WorkflowFileName="InitAllSettings.xaml" />
+    <ui:InvokeWorkflowFile DisplayName="Invoke InitAllSettings (le Config.xlsx)" WorkflowFileName="InitAllSettings.xaml">
+      <ui:InvokeWorkflowFile.Arguments>
+        <scg:Dictionary x:TypeArguments="x:String, InArgument">
+          <InArgument x:TypeArguments="x:String" x:Key="in_ConfigFile">["Data\Config.xlsx"]</InArgument>
+          <InArgument x:TypeArguments="scg:IEnumerable(x:String)" x:Key="in_ConfigSheets">[New String() {"Settings", "Constants"}]</InArgument>
+          <OutArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)" x:Key="out_Config">[Config]</OutArgument>
+        </scg:Dictionary>
+      </ui:InvokeWorkflowFile.Arguments>
+    </ui:InvokeWorkflowFile>
 
     <ui:LogMessage DisplayName="Log: inicio" Level="Info" Message="[&quot;Dispatcher iniciado. Conta: &quot; &amp; Config(&quot;EmailAccount&quot;).ToString]" />
 

@@ -1,0 +1,73 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="InitAllSettings"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:sd="clr-namespace:System.Data;assembly=System.Data"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_ConfigFile" Type="InArgument(x:String)" />
+    <x:Property Name="in_ConfigSheets" Type="InArgument(scg:IEnumerable(x:String))" />
+    <x:Property Name="out_Config" Type="OutArgument(scg:Dictionary(x:String, x:Object))" />
+  </x:Members>
+  <sap2010:WorkflowViewState.IdRef>InitAllSettings_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="5">
+      <x:String>System</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>UiPath.Core</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <Sequence DisplayName="InitAllSettings - le Config.xlsx">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="sd:DataTable" Name="dtSettings" />
+    </Sequence.Variables>
+
+    <!-- Inicializa o dicionario de saida -->
+    <Assign DisplayName="Novo Dictionary">
+      <Assign.To><OutArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)">[out_Config]</OutArgument></Assign.To>
+      <Assign.Value><InArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)">[New Dictionary(Of String, Object)]</InArgument></Assign.Value>
+    </Assign>
+
+    <!-- Le cada aba (Settings, Constants) e popula Name -> Value -->
+    <ui:ForEach x:TypeArguments="x:String" DisplayName="For Each sheet" Values="[in_ConfigSheets]">
+      <ActivityAction x:TypeArguments="x:String">
+        <ActivityAction.Argument>
+          <DelegateInArgument x:TypeArguments="x:String" Name="sheetName" />
+        </ActivityAction.Argument>
+        <Sequence DisplayName="Le aba e adiciona ao Config">
+          <ui:ReadRange DisplayName="Read Range (Workbook)"
+              WorkbookPath="[in_ConfigFile]" SheetName="[sheetName]" Range=""
+              AddHeaders="True">
+            <ui:ReadRange.DataTable>
+              <OutArgument x:TypeArguments="sd:DataTable">[dtSettings]</OutArgument>
+            </ui:ReadRange.DataTable>
+          </ui:ReadRange>
+          <ui:ForEachRow DisplayName="For Each Row" DataTable="[dtSettings]">
+            <ui:ForEachRow.Body>
+              <ActivityAction x:TypeArguments="sd:DataRow">
+                <ActivityAction.Argument>
+                  <DelegateInArgument x:TypeArguments="sd:DataRow" Name="row" />
+                </ActivityAction.Argument>
+                <If Condition="[Not String.IsNullOrWhiteSpace(row(&quot;Name&quot;).ToString)]" DisplayName="Se Name preenchido">
+                  <If.Then>
+                    <Assign DisplayName="Config(Name) = Value">
+                      <Assign.To><OutArgument x:TypeArguments="x:Object">[out_Config(row("Name").ToString.Trim)]</OutArgument></Assign.To>
+                      <Assign.Value><InArgument x:TypeArguments="x:Object">[row("Value")]</InArgument></Assign.Value>
+                    </Assign>
+                  </If.Then>
+                </If>
+              </ActivityAction>
+            </ui:ForEachRow.Body>
+          </ui:ForEachRow>
+        </Sequence>
+      </ActivityAction>
+    </ui:ForEach>
+
+    <ui:LogMessage DisplayName="Log: config carregada" Level="Info" Message="[&quot;InitAllSettings: &quot; &amp; out_Config.Count.ToString &amp; &quot; chaves carregadas de &quot; &amp; in_ConfigFile]" />
+  </Sequence>
+</Activity>

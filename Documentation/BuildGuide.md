@@ -29,8 +29,9 @@ Projeto **Process** simples (Sequence linear, sem framework).
 | `AcceptedVendors` | `String()` | — |
 
 ### Passos
-1. **Invoke `InitAllSettings`** (ou Read Range no Config.xlsx → `Config`).
-   - Lê `Data/Config.xlsx`, abas `Settings` e `Constants` para o Dictionary `Config`.
+1. **Invoke `InitAllSettings.xaml`** (já incluído neste projeto — não depende do template).
+   - Args: `in_ConfigFile = "Data\Config.xlsx"`, `in_ConfigSheets = {"Settings","Constants"}`,
+     `out_Config → Config`. Lê as abas para o Dictionary `Config`.
 2. **Get IMAP/Outlook Mail Messages**
    - Conta: `Config("EmailAccount").ToString`
    - Pasta: `Config("EmailReadFolder").ToString`
