@@ -1,0 +1,128 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:mail="clr-namespace:System.Net.Mail;assembly=System"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=mscorlib"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <sap2010:WorkflowViewState.IdRef>Main_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="6">
+      <x:String>System</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Net.Mail</x:String>
+      <x:String>System.Text.RegularExpressions</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>UiPath.Core</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <Sequence DisplayName="Dispatcher - Email para Queue">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="scg:Dictionary(x:String, x:Object)" Name="Config" />
+      <Variable x:TypeArguments="scg:List(mail:MailMessage)" Name="Messages" />
+      <Variable x:TypeArguments="x:Int32" Name="EnqueuedCount" />
+      <Variable x:TypeArguments="x:Int32" Name="RejectedCount" />
+    </Sequence.Variables>
+
+    <!-- 1. Carrega configuracao (mesma rotina do REFramework) -->
+    <ui:InvokeWorkflowFile DisplayName="Invoke InitAllSettings (le Config.xlsx)" WorkflowFileName="InitAllSettings.xaml" />
+
+    <ui:LogMessage DisplayName="Log: inicio" Level="Info" Message="[&quot;Dispatcher iniciado. Conta: &quot; &amp; Config(&quot;EmailAccount&quot;).ToString]" />
+
+    <!-- 2. Le e-mails nao lidos -->
+    <ui:GetIMAPMailMessages DisplayName="Get IMAP Mail Messages"
+        Server="imap.gmail.com" Port="993" Email="[Config(&quot;EmailAccount&quot;).ToString]"
+        MailFolder="[Config(&quot;EmailReadFolder&quot;).ToString]"
+        OnlyUnreadMessages="True" MarkAsRead="False" Top="[CInt(Config(&quot;MaxEmailsPerRun&quot;).ToString)]">
+      <ui:GetIMAPMailMessages.Messages>
+        <OutArgument x:TypeArguments="scg:List(mail:MailMessage)">[Messages]</OutArgument>
+      </ui:GetIMAPMailMessages.Messages>
+    </ui:GetIMAPMailMessages>
+
+    <!-- 3. Para cada e-mail: parse + validacao + enfileira -->
+    <ui:ForEach x:TypeArguments="mail:MailMessage" DisplayName="For Each mail" Values="[Messages]">
+      <ActivityAction x:TypeArguments="mail:MailMessage">
+        <ActivityAction.Argument>
+          <DelegateInArgument x:TypeArguments="mail:MailMessage" Name="mail" />
+        </ActivityAction.Argument>
+        <TryCatch DisplayName="Try processar e-mail">
+          <TryCatch.Try>
+            <Sequence DisplayName="Parse e enfileira">
+              <Sequence.Variables>
+                <Variable x:TypeArguments="x:String" Name="WIType" />
+                <Variable x:TypeArguments="x:String" Name="Vendor" />
+                <Variable x:TypeArguments="x:String" Name="Description" />
+                <Variable x:TypeArguments="x:Boolean" Name="IsValid" />
+              </Sequence.Variables>
+              <Assign DisplayName="Parse WIType">
+                <Assign.To><OutArgument x:TypeArguments="x:String">[WIType]</OutArgument></Assign.To>
+                <Assign.Value><InArgument x:TypeArguments="x:String">[Regex.Match(mail.Body, "Type:\s*(.+)").Groups(1).Value.Trim]</InArgument></Assign.Value>
+              </Assign>
+              <Assign DisplayName="Parse Vendor">
+                <Assign.To><OutArgument x:TypeArguments="x:String">[Vendor]</OutArgument></Assign.To>
+                <Assign.Value><InArgument x:TypeArguments="x:String">[Regex.Match(mail.Body, "Vendor:\s*(.+)").Groups(1).Value.Trim]</InArgument></Assign.Value>
+              </Assign>
+              <Assign DisplayName="Parse Description">
+                <Assign.To><OutArgument x:TypeArguments="x:String">[Description]</OutArgument></Assign.To>
+                <Assign.Value><InArgument x:TypeArguments="x:String">[Regex.Match(mail.Body, "Description:\s*(.+)").Groups(1).Value.Trim]</InArgument></Assign.Value>
+              </Assign>
+              <Assign DisplayName="Valida campos + vendor aceito">
+                <Assign.To><OutArgument x:TypeArguments="x:Boolean">[IsValid]</OutArgument></Assign.To>
+                <Assign.Value><InArgument x:TypeArguments="x:Boolean">[Not String.IsNullOrEmpty(WIType) AndAlso Not String.IsNullOrEmpty(Vendor) AndAlso Not String.IsNullOrEmpty(Description) AndAlso Config("AcceptedVendors").ToString.Split(";"c).Contains(Vendor)]</InArgument></Assign.Value>
+              </Assign>
+              <If Condition="[IsValid]" DisplayName="If valido">
+                <If.Then>
+                  <Sequence DisplayName="Enfileira + marca e-mail">
+                    <ui:AddQueueItem DisplayName="Add Queue Item"
+                        QueueName="[Config(&quot;OrchestratorQueueName&quot;).ToString]"
+                        Reference="[If(mail.Headers IsNot Nothing AndAlso mail.Headers(&quot;Message-ID&quot;) IsNot Nothing, mail.Headers(&quot;Message-ID&quot;), mail.Subject)]">
+                      <ui:AddQueueItem.ItemInformation>
+                        <scg:Dictionary x:TypeArguments="x:String, x:Object">
+                          <x:String x:Key="WIType">[WIType]</x:String>
+                          <x:String x:Key="Description">[Description]</x:String>
+                          <x:String x:Key="Vendor">[Vendor]</x:String>
+                          <InArgument x:TypeArguments="x:Object" x:Key="EmailFrom">[mail.From.ToString]</InArgument>
+                          <InArgument x:TypeArguments="x:Object" x:Key="EmailSubject">[mail.Subject]</InArgument>
+                        </scg:Dictionary>
+                      </ui:AddQueueItem.ItemInformation>
+                    </ui:AddQueueItem>
+                    <ui:MoveIMAPMailMessage DisplayName="Move e-mail para Processed" MailMessage="[mail]" MailFolder="[Config(&quot;EmailProcessedFolder&quot;).ToString]" />
+                    <Assign DisplayName="++EnqueuedCount">
+                      <Assign.To><OutArgument x:TypeArguments="x:Int32">[EnqueuedCount]</OutArgument></Assign.To>
+                      <Assign.Value><InArgument x:TypeArguments="x:Int32">[EnqueuedCount + 1]</InArgument></Assign.Value>
+                    </Assign>
+                  </Sequence>
+                </If.Then>
+                <If.Else>
+                  <Sequence DisplayName="Rejeita e-mail invalido">
+                    <ui:LogMessage DisplayName="Log: invalido" Level="Warn" Message="[&quot;E-mail rejeitado (dados incompletos/vendor invalido): &quot; &amp; mail.Subject]" />
+                    <ui:MoveIMAPMailMessage DisplayName="Move para Rejected" MailMessage="[mail]" MailFolder="[Config(&quot;EmailRejectedFolder&quot;).ToString]" />
+                    <Assign DisplayName="++RejectedCount">
+                      <Assign.To><OutArgument x:TypeArguments="x:Int32">[RejectedCount]</OutArgument></Assign.To>
+                      <Assign.Value><InArgument x:TypeArguments="x:Int32">[RejectedCount + 1]</InArgument></Assign.Value>
+                    </Assign>
+                  </Sequence>
+                </If.Else>
+              </If>
+            </Sequence>
+          </TryCatch.Try>
+          <TryCatch.Catches>
+            <Catch x:TypeArguments="x:Exception" DisplayName="Catch Exception">
+              <ActivityAction x:TypeArguments="x:Exception">
+                <ActivityAction.Argument>
+                  <DelegateInArgument x:TypeArguments="x:Exception" Name="ex" />
+                </ActivityAction.Argument>
+                <ui:LogMessage DisplayName="Log: erro no e-mail" Level="Error" Message="[&quot;Falha ao processar e-mail '&quot; &amp; mail.Subject &amp; &quot;': &quot; &amp; ex.Message]" />
+              </ActivityAction>
+            </Catch>
+          </TryCatch.Catches>
+        </TryCatch>
+      </ActivityAction>
+    </ui:ForEach>
+
+    <ui:LogMessage DisplayName="Log: fim" Level="Info" Message="[&quot;Dispatcher finalizado. Enfileirados: &quot; &amp; EnqueuedCount.ToString &amp; &quot; | Rejeitados: &quot; &amp; RejectedCount.ToString]" />
+  </Sequence>
+</Activity>

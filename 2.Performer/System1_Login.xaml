@@ -1,0 +1,35 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="System1_Login"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <x:Members>
+    <x:Property Name="in_Browser" Type="InArgument(ui:Browser)" />
+    <x:Property Name="in_Username" Type="InArgument(x:String)" />
+    <x:Property Name="in_SecurePassword" Type="InArgument(s:Security.SecureString)" xmlns:s="clr-namespace:System;assembly=mscorlib" />
+  </x:Members>
+  <sap2010:WorkflowViewState.IdRef>System1_Login_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="4">
+      <x:String>System</x:String>
+      <x:String>System.Security</x:String>
+      <x:String>UiPath.Core</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <Sequence DisplayName="System1 - Login no ACME">
+    <ui:LogMessage DisplayName="Log: iniciando login" Level="Info" Message="Iniciando login no ACME System 1" />
+    <ui:NavigateBrowser Browser="[in_Browser]" DisplayName="Garante pagina de Login" Url="https://acme-test.uipath.com/account/login" />
+    <ui:TypeInto DisplayName="Preenche e-mail" Text="[in_Username]" ContinueOnError="False" SimulateType="True" Selector="&lt;webctrl id='email' tag='INPUT' /&gt;" />
+    <ui:TypeSecureText DisplayName="Preenche senha" SecureText="[in_SecurePassword]" SimulateType="True" Selector="&lt;webctrl id='password' tag='INPUT' /&gt;" />
+    <ui:Click DisplayName="Clica em Login" SimulateClick="True" Selector="&lt;webctrl tag='BUTTON' aaname='Login' /&gt;" />
+    <ui:ElementExists DisplayName="Confirma login (menu visivel)" Selector="&lt;webctrl tag='BUTTON' aaname='Log Out' /&gt;" TimeoutMS="15000">
+      <ui:ElementExists.Result>
+        <OutArgument x:TypeArguments="x:Boolean" />
+      </ui:ElementExists.Result>
+    </ui:ElementExists>
+    <ui:LogMessage DisplayName="Log: login OK" Level="Info" Message="Login realizado com sucesso" />
+  </Sequence>
+</Activity>

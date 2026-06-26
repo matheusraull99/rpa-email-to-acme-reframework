@@ -1,0 +1,62 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Test_Process"
+ xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities"
+ xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+ xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation"
+ xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation"
+ xmlns:scg="clr-namespace:System.Collections.Generic;assembly=mscorlib"
+ xmlns:ui="http://schemas.uipath.com/workflow/activities"
+ xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <sap2010:WorkflowViewState.IdRef>Test_Process_1</sap2010:WorkflowViewState.IdRef>
+  <TextExpression.NamespacesForImplementation>
+    <scg:List x:TypeArguments="x:String" Capacity="4">
+      <x:String>System</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>UiPath.Core</x:String>
+    </scg:List>
+  </TextExpression.NamespacesForImplementation>
+  <!--
+    TESTE DE INTEGRACAO do Process.xaml.
+    Pre-condicao: o ACME ja deve estar logado (rode InitAllApplications antes) e o
+    Browser disponivel no Config("ACME_Browser"). Para teste 100% unitario da regra
+    de negocio (sem ACME), veja Test_VendorRule.xaml.
+  -->
+  <Sequence DisplayName="GIVEN/WHEN/THEN - Process cria Work Item">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="scg:Dictionary(x:String, x:Object)" Name="Config" />
+      <Variable x:TypeArguments="scg:Dictionary(x:String, x:Object)" Name="FakeSpecificContent" />
+    </Sequence.Variables>
+
+    <!-- GIVEN: configuracao e um item de fila valido -->
+    <Assign DisplayName="GIVEN: Config com vendor aceito">
+      <Assign.To><OutArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)">[Config]</OutArgument></Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)">[New Dictionary(Of String, Object) From {{"AcceptedVendors", "ACME Corp;Lisper;Saturn"}, {"ACME_URL", "https://acme-test.uipath.com"}}]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <Assign DisplayName="GIVEN: SpecificContent fake">
+      <Assign.To><OutArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)">[FakeSpecificContent]</OutArgument></Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="scg:Dictionary(x:String, x:Object)">[New Dictionary(Of String, Object) From {{"WIType", "WI5"}, {"Vendor", "ACME Corp"}, {"Description", "Reconciliar fatura 8841"}}]</InArgument>
+      </Assign.Value>
+    </Assign>
+
+    <!-- WHEN: cria um QueueItem de teste a partir do SpecificContent -->
+    <ui:AddQueueItem DisplayName="WHEN: cria QueueItem de teste" QueueName="EmailWorkItems_TEST" Reference="TEST-001">
+      <ui:AddQueueItem.ItemInformation>
+        <scg:Dictionary x:TypeArguments="x:String, x:Object">
+          <x:String x:Key="WIType">WI5</x:String>
+          <x:String x:Key="Vendor">ACME Corp</x:String>
+          <x:String x:Key="Description">Reconciliar fatura 8841</x:String>
+        </scg:Dictionary>
+      </ui:AddQueueItem.ItemInformation>
+    </ui:AddQueueItem>
+
+    <!-- THEN: o vendor do item deve ser aceito (regra de negocio do Process) -->
+    <ui:VerifyExpression DisplayName="THEN: vendor e aceito (nao deve lancar BusinessRuleException)"
+        ContinueOnError="False"
+        Expression="[Config(&quot;AcceptedVendors&quot;).ToString.Split(&quot;;&quot;c).Contains(FakeSpecificContent(&quot;Vendor&quot;).ToString)]"
+        ExpectedResult="[True]" />
+    <ui:LogMessage DisplayName="Log: teste passou" Level="Info" Message="Test_Process: item valido aceito pela regra de negocio." />
+  </Sequence>
+</Activity>
