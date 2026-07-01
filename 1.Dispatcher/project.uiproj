@@ -1,0 +1,6 @@
+{
+  "Name": "EmailToACME.Dispatcher",
+  "ProjectType": "Process",
+  "Description": "Le e-mails nao lidos, valida e enfileira Work Items na Queue EmailWorkItems do Orchestrator.",
+  "MainFile": "Main.xaml"
+}

@@ -1,0 +1,157 @@
+<Activity mc:Ignorable="sap sap2010" x:Class="Main" VisualBasic.Settings="{x:Null}" sap2010:WorkflowViewState.IdRef="ActivityBuilder_1" xmlns="http://schemas.microsoft.com/netfx/2009/xaml/activities" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:sap="http://schemas.microsoft.com/netfx/2009/xaml/activities/presentation" xmlns:sap2010="http://schemas.microsoft.com/netfx/2010/xaml/activities/presentation" xmlns:scg="clr-namespace:System.Collections.Generic;assembly=System.Private.CoreLib" xmlns:sco="clr-namespace:System.Collections.ObjectModel;assembly=System.Private.CoreLib" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <TextExpression.NamespacesForImplementation>
+    <sco:Collection x:TypeArguments="x:String">
+      <x:String>System.Activities</x:String>
+      <x:String>System.Activities.Statements</x:String>
+      <x:String>System.Activities.Expressions</x:String>
+      <x:String>System.Activities.Validation</x:String>
+      <x:String>System.Activities.XamlIntegration</x:String>
+      <x:String>Microsoft.VisualBasic</x:String>
+      <x:String>Microsoft.VisualBasic.Activities</x:String>
+      <x:String>System</x:String>
+      <x:String>System.Collections</x:String>
+      <x:String>System.Collections.Generic</x:String>
+      <x:String>System.Collections.ObjectModel</x:String>
+      <x:String>System.Data</x:String>
+      <x:String>System.Diagnostics</x:String>
+      <x:String>System.Drawing</x:String>
+      <x:String>System.IO</x:String>
+      <x:String>System.Linq</x:String>
+      <x:String>System.Net.Mail</x:String>
+      <x:String>System.Xml</x:String>
+      <x:String>System.Xml.Linq</x:String>
+      <x:String>UiPath.Core</x:String>
+      <x:String>UiPath.Core.Activities</x:String>
+      <x:String>System.Windows.Markup</x:String>
+      <x:String>GlobalVariablesNamespace</x:String>
+      <x:String>GlobalConstantsNamespace</x:String>
+    </sco:Collection>
+  </TextExpression.NamespacesForImplementation>
+  <TextExpression.ReferencesForImplementation>
+    <sco:Collection x:TypeArguments="AssemblyReference">
+      <AssemblyReference>Microsoft.VisualBasic</AssemblyReference>
+      <AssemblyReference>mscorlib</AssemblyReference>
+      <AssemblyReference>PresentationCore</AssemblyReference>
+      <AssemblyReference>PresentationFramework</AssemblyReference>
+      <AssemblyReference>System</AssemblyReference>
+      <AssemblyReference>System.Activities</AssemblyReference>
+      <AssemblyReference>System.ComponentModel.TypeConverter</AssemblyReference>
+      <AssemblyReference>System.Core</AssemblyReference>
+      <AssemblyReference>System.Data</AssemblyReference>
+      <AssemblyReference>System.Data.Common</AssemblyReference>
+      <AssemblyReference>System.Data.DataSetExtensions</AssemblyReference>
+      <AssemblyReference>System.Drawing</AssemblyReference>
+      <AssemblyReference>System.Drawing.Common</AssemblyReference>
+      <AssemblyReference>System.Drawing.Primitives</AssemblyReference>
+      <AssemblyReference>System.Linq</AssemblyReference>
+      <AssemblyReference>System.Net.Mail</AssemblyReference>
+      <AssemblyReference>System.ObjectModel</AssemblyReference>
+      <AssemblyReference>System.Private.CoreLib</AssemblyReference>
+      <AssemblyReference>System.Xaml</AssemblyReference>
+      <AssemblyReference>System.Xml</AssemblyReference>
+      <AssemblyReference>System.Xml.Linq</AssemblyReference>
+      <AssemblyReference>UiPath.System.Activities</AssemblyReference>
+      <AssemblyReference>UiPath.UiAutomation.Activities</AssemblyReference>
+      <AssemblyReference>WindowsBase</AssemblyReference>
+    </sco:Collection>
+  </TextExpression.ReferencesForImplementation>
+  <Sequence DisplayName="EmailToACME - Demo (Dispatcher + Performer)" sap2010:WorkflowViewState.IdRef="Sequence_1">
+    <Sequence.Variables>
+      <Variable x:TypeArguments="scg:List(x:String)" Name="emails" />
+      <Variable x:TypeArguments="scg:List(x:String)" Name="accepted" />
+      <Variable x:TypeArguments="scg:List(x:String)" Name="queue" Default="[New List(Of String)]" />
+      <Variable x:TypeArguments="x:Int32" Name="enq" Default="[0]" />
+      <Variable x:TypeArguments="x:Int32" Name="rej" Default="[0]" />
+      <Variable x:TypeArguments="x:Int32" Name="ok" Default="[0]" />
+      <Variable x:TypeArguments="x:Int32" Name="wi" Default="[1000]" />
+    </Sequence.Variables>
+    <Assign DisplayName="init: e-mails de teste (3 validos + 1 invalido)" sap2010:WorkflowViewState.IdRef="Assign_1">
+      <Assign.To>
+        <OutArgument x:TypeArguments="scg:List(x:String)">[emails]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="scg:List(x:String)">[New List(Of String) From {&quot;WI5|ACME Corp|Reconciliar fatura 8841|New Work Item - fatura 8841&quot;, &quot;WI4|Lisper|Validar pedido 5520|New Work Item - pedido 5520&quot;, &quot;WI3|Saturn|Conferir clausula 12 do contrato|New Work Item - contrato&quot;, &quot;WI5|Bradesco|Vendor nao autorizado|New Work Item - INVALIDO&quot;}]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <Assign DisplayName="init: vendors aceitos (do Config)" sap2010:WorkflowViewState.IdRef="Assign_2">
+      <Assign.To>
+        <OutArgument x:TypeArguments="scg:List(x:String)">[accepted]</OutArgument>
+      </Assign.To>
+      <Assign.Value>
+        <InArgument x:TypeArguments="scg:List(x:String)">[New List(Of String) From {&quot;ACME Corp&quot;, &quot;Lisper&quot;, &quot;Saturn&quot;, &quot;Gold Trust&quot;}]</InArgument>
+      </Assign.Value>
+    </Assign>
+    <WriteLine DisplayName="log vendors" sap2010:WorkflowViewState.IdRef="WriteLine_1" Text="[&quot;AcceptedVendors: &quot; &amp; String.Join(&quot;, &quot;, accepted)]" />
+    <WriteLine DisplayName="log header 1" sap2010:WorkflowViewState.IdRef="WriteLine_2" Text="[&quot;===== 1) DISPATCHER  - le e-mails, valida e enfileira =====&quot;]" />
+    <ForEach x:TypeArguments="x:String" DisplayName="Para cada e-mail" sap2010:WorkflowViewState.IdRef="ForEach`1_1" Values="[emails]">
+      <ActivityAction x:TypeArguments="x:String">
+        <ActivityAction.Argument>
+          <DelegateInArgument x:TypeArguments="x:String" Name="mail" />
+        </ActivityAction.Argument>
+        <Sequence DisplayName="processa e-mail" sap2010:WorkflowViewState.IdRef="Sequence_2">
+          <If Condition="[accepted.Contains(mail.Split(&quot;|&quot;c)(1))]" DisplayName="vendor aceito?" sap2010:WorkflowViewState.IdRef="If_1">
+            <If.Then>
+              <Sequence DisplayName="ENFILEIRA" sap2010:WorkflowViewState.IdRef="Sequence_3">
+                <WriteLine DisplayName="log enfileirado" sap2010:WorkflowViewState.IdRef="WriteLine_3" Text="[&quot;  [ENFILEIRADO] &quot; &amp; mail.Split(&quot;|&quot;c)(1) &amp; &quot; | &quot; &amp; mail.Split(&quot;|&quot;c)(0) &amp; &quot; | &quot; &amp; mail.Split(&quot;|&quot;c)(3)]" />
+                <AddToCollection x:TypeArguments="x:String" Collection="[queue]" DisplayName="add na fila" sap2010:WorkflowViewState.IdRef="AddToCollection`1_1" Item="[mail]" />
+                <Assign DisplayName="enq++" sap2010:WorkflowViewState.IdRef="Assign_3">
+                  <Assign.To>
+                    <OutArgument x:TypeArguments="x:Int32">[enq]</OutArgument>
+                  </Assign.To>
+                  <Assign.Value>
+                    <InArgument x:TypeArguments="x:Int32">[enq + 1]</InArgument>
+                  </Assign.Value>
+                </Assign>
+              </Sequence>
+            </If.Then>
+            <If.Else>
+              <Sequence DisplayName="REJEITA" sap2010:WorkflowViewState.IdRef="Sequence_4">
+                <WriteLine DisplayName="log rejeitado" sap2010:WorkflowViewState.IdRef="WriteLine_4" Text="[&quot;  [REJEITADO]   &quot; &amp; mail.Split(&quot;|&quot;c)(1) &amp; &quot; | vendor nao aceito | &quot; &amp; mail.Split(&quot;|&quot;c)(3)]" />
+                <Assign DisplayName="rej++" sap2010:WorkflowViewState.IdRef="Assign_4">
+                  <Assign.To>
+                    <OutArgument x:TypeArguments="x:Int32">[rej]</OutArgument>
+                  </Assign.To>
+                  <Assign.Value>
+                    <InArgument x:TypeArguments="x:Int32">[rej + 1]</InArgument>
+                  </Assign.Value>
+                </Assign>
+              </Sequence>
+            </If.Else>
+          </If>
+        </Sequence>
+      </ActivityAction>
+    </ForEach>
+    <WriteLine DisplayName="log resumo dispatcher" sap2010:WorkflowViewState.IdRef="WriteLine_5" Text="[&quot;  -&gt; Queue 'EmailWorkItems': &quot; &amp; enq.ToString &amp; &quot; item(ns) | Rejeitados: &quot; &amp; rej.ToString]" />
+    <WriteLine DisplayName="log header 2" sap2010:WorkflowViewState.IdRef="WriteLine_6" Text="[&quot;===== 2) PERFORMER (REFramework) - consome a fila e cria Work Items =====&quot;]" />
+    <ForEach x:TypeArguments="x:String" DisplayName="Para cada item da fila" sap2010:WorkflowViewState.IdRef="ForEach`1_2" Values="[queue]">
+      <ActivityAction x:TypeArguments="x:String">
+        <ActivityAction.Argument>
+          <DelegateInArgument x:TypeArguments="x:String" Name="item" />
+        </ActivityAction.Argument>
+        <Sequence DisplayName="cria work item" sap2010:WorkflowViewState.IdRef="Sequence_5">
+          <WriteLine DisplayName="log login" sap2010:WorkflowViewState.IdRef="WriteLine_7" Text="[&quot;  login ACME ... OK&quot;]" />
+          <Assign DisplayName="wi++" sap2010:WorkflowViewState.IdRef="Assign_5">
+            <Assign.To>
+              <OutArgument x:TypeArguments="x:Int32">[wi]</OutArgument>
+            </Assign.To>
+            <Assign.Value>
+              <InArgument x:TypeArguments="x:Int32">[wi + 1]</InArgument>
+            </Assign.Value>
+          </Assign>
+          <WriteLine DisplayName="log sucesso" sap2010:WorkflowViewState.IdRef="WriteLine_8" Text="[&quot;  [SUCCESS] Work Item WI-&quot; &amp; wi.ToString &amp; &quot; criado (tipo=&quot; &amp; item.Split(&quot;|&quot;c)(0) &amp; &quot; vendor=&quot; &amp; item.Split(&quot;|&quot;c)(1) &amp; &quot;)&quot;]" />
+          <Assign DisplayName="ok++" sap2010:WorkflowViewState.IdRef="Assign_6">
+            <Assign.To>
+              <OutArgument x:TypeArguments="x:Int32">[ok]</OutArgument>
+            </Assign.To>
+            <Assign.Value>
+              <InArgument x:TypeArguments="x:Int32">[ok + 1]</InArgument>
+            </Assign.Value>
+          </Assign>
+        </Sequence>
+      </ActivityAction>
+    </ForEach>
+    <WriteLine DisplayName="log resultado" sap2010:WorkflowViewState.IdRef="WriteLine_9" Text="[&quot;----------------------------------------------------------&quot;]" />
+    <WriteLine DisplayName="log total" sap2010:WorkflowViewState.IdRef="WriteLine_10" Text="[&quot;RESULTADO: &quot; &amp; ok.ToString &amp; &quot; sucesso(s) | 0 Business Exception(s)&quot;]" />
+    <WriteLine DisplayName="log fim" sap2010:WorkflowViewState.IdRef="WriteLine_11" Text="[&quot;DEMO concluida no UiPath (sem Gmail/Orchestrator/ACME).&quot;]" />
+  </Sequence>
+</Activity>

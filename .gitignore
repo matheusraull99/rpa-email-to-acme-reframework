@@ -20,3 +20,5 @@ secrets.*
 Thumbs.db
 .DS_Store
 ~$*.xlsx
+**/.project/
+.project/
